@@ -5,7 +5,19 @@ import { PropertyPanel } from "./PropertyPanel";
 import { Toolbar } from "./Toolbar";
 import { toast } from "sonner";
 
-const initialLayers: Layer[] = [
+interface CanvasLayer {
+  id: string;
+  name: string;
+  type: "background" | "product" | "design";
+  visible: boolean;
+  locked: boolean;
+  opacity: number;
+  imageUrl?: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+}
+
+const initialLayers: CanvasLayer[] = [
   {
     id: "background-1",
     name: "Business Background",
@@ -13,6 +25,8 @@ const initialLayers: Layer[] = [
     visible: true,
     locked: false,
     opacity: 100,
+    position: { x: 0, y: 0 },
+    size: { width: 680, height: 440 }, // Full proof size
   },
   {
     id: "product-1",
@@ -21,6 +35,8 @@ const initialLayers: Layer[] = [
     visible: true,
     locked: false,
     opacity: 100,
+    position: { x: 50, y: 50 },
+    size: { width: 200, height: 200 },
   },
   {
     id: "design-1",
@@ -29,11 +45,13 @@ const initialLayers: Layer[] = [
     visible: true,
     locked: false,
     opacity: 100,
+    position: { x: 100, y: 300 },
+    size: { width: 100, height: 100 },
   },
 ];
 
 export const ProofingApp = () => {
-  const [layers, setLayers] = useState<Layer[]>(initialLayers);
+  const [layers, setLayers] = useState<CanvasLayer[]>(initialLayers);
   const [activeLayerId, setActiveLayerId] = useState<string | null>("background-1");
   const [activeTool, setActiveTool] = useState("select");
 
@@ -78,6 +96,27 @@ export const ProofingApp = () => {
   const handleToolChange = (tool: string) => {
     setActiveTool(tool);
     toast(`Switched to ${tool} tool`);
+  };
+
+  const handleImageUpload = (layerId: string, imageUrl: string) => {
+    setLayers(prev =>
+      prev.map(layer =>
+        layer.id === layerId
+          ? { ...layer, imageUrl }
+          : layer
+      )
+    );
+    toast("Image uploaded successfully!");
+  };
+
+  const handleLayerUpdate = (layerId: string, updates: Partial<CanvasLayer>) => {
+    setLayers(prev =>
+      prev.map(layer =>
+        layer.id === layerId
+          ? { ...layer, ...updates }
+          : layer
+      )
+    );
   };
 
   const handleAction = (action: string) => {
@@ -158,12 +197,19 @@ export const ProofingApp = () => {
 
         {/* Center - Canvas */}
         <div className="flex-1 bg-gradient-workspace">
-          <Canvas />
+          <Canvas 
+            layers={layers}
+            activeLayerId={activeLayerId}
+          />
         </div>
 
         {/* Right Sidebar - Properties */}
         <div className="w-80 border-l border-border bg-workspace p-4">
-          <PropertyPanel activeLayerType={activeLayer?.type || null} />
+          <PropertyPanel 
+            activeLayer={activeLayer}
+            onImageUpload={handleImageUpload}
+            onLayerUpdate={handleLayerUpdate}
+          />
         </div>
       </div>
     </div>

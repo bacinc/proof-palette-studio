@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,18 +7,31 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, RotateCw, FlipHorizontal, FlipVertical } from "lucide-react";
+import { toast } from "sonner";
 
-interface PropertyPanelProps {
-  activeLayerType: "background" | "product" | "design" | null;
+interface Layer {
+  id: string;
+  name: string;
+  type: "background" | "product" | "design";
+  visible: boolean;
+  locked: boolean;
+  opacity: number;
+  imageUrl?: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
 }
 
-export const PropertyPanel = ({ activeLayerType }: PropertyPanelProps) => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 100, height: 100 });
-  const [rotation, setRotation] = useState(0);
-  const [opacity, setOpacity] = useState(100);
+interface PropertyPanelProps {
+  activeLayer: Layer | undefined;
+  onImageUpload: (layerId: string, imageUrl: string) => void;
+  onLayerUpdate: (layerId: string, updates: Partial<Layer>) => void;
+}
 
-  if (!activeLayerType) {
+export const PropertyPanel = ({ activeLayer, onImageUpload, onLayerUpdate }: PropertyPanelProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [rotation, setRotation] = useState(0);
+
+  if (!activeLayer) {
     return (
       <Card className="bg-panel-bg border-border shadow-panel">
         <div className="p-6 text-center">
@@ -28,12 +41,38 @@ export const PropertyPanel = ({ activeLayerType }: PropertyPanelProps) => {
     );
   }
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && activeLayer) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        onImageUpload(activeLayer.id, imageUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePropertyChange = (property: string, value: any) => {
+    if (activeLayer) {
+      onLayerUpdate(activeLayer.id, { [property]: value });
+    }
+  };
+
   return (
     <Card className="bg-panel-bg border-border shadow-panel">
       <div className="p-4">
         <h3 className="text-lg font-semibold text-foreground mb-4 capitalize">
-          {activeLayerType} Properties
+          {activeLayer.type} Properties
         </h3>
+        
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
         
         <Tabs defaultValue="transform" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-workspace">
@@ -50,8 +89,8 @@ export const PropertyPanel = ({ activeLayerType }: PropertyPanelProps) => {
                   <Label className="text-xs text-muted-foreground">X</Label>
                   <Input
                     type="number"
-                    value={position.x}
-                    onChange={(e) => setPosition(prev => ({ ...prev, x: Number(e.target.value) }))}
+                    value={activeLayer.position.x}
+                    onChange={(e) => handlePropertyChange('position', { ...activeLayer.position, x: Number(e.target.value) })}
                     className="bg-input border-border text-foreground"
                   />
                 </div>
@@ -59,8 +98,8 @@ export const PropertyPanel = ({ activeLayerType }: PropertyPanelProps) => {
                   <Label className="text-xs text-muted-foreground">Y</Label>
                   <Input
                     type="number"
-                    value={position.y}
-                    onChange={(e) => setPosition(prev => ({ ...prev, y: Number(e.target.value) }))}
+                    value={activeLayer.position.y}
+                    onChange={(e) => handlePropertyChange('position', { ...activeLayer.position, y: Number(e.target.value) })}
                     className="bg-input border-border text-foreground"
                   />
                 </div>
@@ -75,8 +114,8 @@ export const PropertyPanel = ({ activeLayerType }: PropertyPanelProps) => {
                   <Label className="text-xs text-muted-foreground">Width</Label>
                   <Input
                     type="number"
-                    value={size.width}
-                    onChange={(e) => setSize(prev => ({ ...prev, width: Number(e.target.value) }))}
+                    value={activeLayer.size.width}
+                    onChange={(e) => handlePropertyChange('size', { ...activeLayer.size, width: Number(e.target.value) })}
                     className="bg-input border-border text-foreground"
                   />
                 </div>
@@ -84,8 +123,8 @@ export const PropertyPanel = ({ activeLayerType }: PropertyPanelProps) => {
                   <Label className="text-xs text-muted-foreground">Height</Label>
                   <Input
                     type="number"
-                    value={size.height}
-                    onChange={(e) => setSize(prev => ({ ...prev, height: Number(e.target.value) }))}
+                    value={activeLayer.size.height}
+                    onChange={(e) => handlePropertyChange('size', { ...activeLayer.size, height: Number(e.target.value) })}
                     className="bg-input border-border text-foreground"
                   />
                 </div>
@@ -113,14 +152,14 @@ export const PropertyPanel = ({ activeLayerType }: PropertyPanelProps) => {
               <Label className="text-sm font-medium text-foreground">Opacity</Label>
               <div className="flex items-center gap-2">
                 <Slider
-                  value={[opacity]}
-                  onValueChange={(value) => setOpacity(value[0])}
+                  value={[activeLayer.opacity]}
+                  onValueChange={(value) => handlePropertyChange('opacity', value[0])}
                   max={100}
                   min={0}
                   step={1}
                   className="flex-1"
                 />
-                <span className="text-xs text-muted-foreground w-12">{opacity}%</span>
+                <span className="text-xs text-muted-foreground w-12">{activeLayer.opacity}%</span>
               </div>
             </div>
 
@@ -144,7 +183,16 @@ export const PropertyPanel = ({ activeLayerType }: PropertyPanelProps) => {
           </TabsContent>
           
           <TabsContent value="content" className="space-y-4 mt-4">
-            {activeLayerType === "background" && (
+            {/* Upload Image Button */}
+            <Button 
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full bg-accent hover:bg-accent-hover text-accent-foreground"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {activeLayer.imageUrl ? 'Change Image' : 'Upload Image'}
+            </Button>
+            
+            {activeLayer.type === "background" && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-foreground">Background Type</Label>
@@ -167,12 +215,8 @@ export const PropertyPanel = ({ activeLayerType }: PropertyPanelProps) => {
               </div>
             )}
 
-            {activeLayerType === "product" && (
+            {activeLayer.type === "product" && (
               <div className="space-y-4">
-                <Button className="w-full bg-accent hover:bg-accent-hover text-accent-foreground">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Product Image
-                </Button>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-foreground">Product Type</Label>
                   <Input 
@@ -183,12 +227,8 @@ export const PropertyPanel = ({ activeLayerType }: PropertyPanelProps) => {
               </div>
             )}
 
-            {activeLayerType === "design" && (
+            {activeLayer.type === "design" && (
               <div className="space-y-4">
-                <Button className="w-full bg-secondary hover:bg-secondary-hover text-secondary-foreground">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Logo/Design
-                </Button>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-foreground">Placement</Label>
                   <div className="grid grid-cols-2 gap-2">

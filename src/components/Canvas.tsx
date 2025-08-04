@@ -1,14 +1,28 @@
 import { useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 
+interface CanvasLayer {
+  id: string;
+  type: "background" | "product" | "design";
+  visible: boolean;
+  imageUrl?: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  opacity: number;
+}
+
 interface CanvasProps {
-  width?: number;
-  height?: number;
+  layers: CanvasLayer[];
+  activeLayerId: string | null;
   className?: string;
 }
 
-export const Canvas = ({ width = 800, height = 600, className }: CanvasProps) => {
+export const Canvas = ({ layers, activeLayerId, className }: CanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
+  
+  // Proof dimensions: 17" x 11" at 96 DPI = 1632 x 1056 pixels
+  const proofWidth = 680; // Scaled down for display
+  const proofHeight = 440; // Scaled down for display
 
   return (
     <Card className="flex-1 bg-canvas-bg border-border shadow-panel overflow-hidden">
@@ -16,7 +30,7 @@ export const Canvas = ({ width = 800, height = 600, className }: CanvasProps) =>
         <div
           ref={canvasRef}
           className="relative bg-background rounded-lg shadow-elegant border border-border"
-          style={{ width, height }}
+          style={{ width: proofWidth, height: proofHeight }}
         >
           {/* Grid overlay for alignment */}
           <div 
@@ -30,16 +44,51 @@ export const Canvas = ({ width = 800, height = 600, className }: CanvasProps) =>
             }}
           />
           
-          {/* Sample content - this would be replaced with actual layer rendering */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <div className="w-32 h-32 bg-gradient-primary rounded-full mx-auto opacity-50" />
-              <div className="space-y-2">
-                <div className="h-4 bg-muted rounded w-48 mx-auto" />
-                <div className="h-3 bg-muted rounded w-32 mx-auto" />
+          {/* Render layers */}
+          {layers.map((layer) => {
+            if (!layer.visible) return null;
+            
+            return (
+              <div
+                key={layer.id}
+                className={`absolute border-2 transition-all ${
+                  activeLayerId === layer.id ? 'border-primary border-dashed' : 'border-transparent'
+                }`}
+                style={{
+                  left: layer.position.x,
+                  top: layer.position.y,
+                  width: layer.size.width,
+                  height: layer.size.height,
+                  opacity: layer.opacity / 100,
+                }}
+              >
+                {layer.imageUrl ? (
+                  <img
+                    src={layer.imageUrl}
+                    alt={`Layer ${layer.id}`}
+                    className="w-full h-full object-cover rounded"
+                    draggable={false}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-muted/50 rounded flex items-center justify-center text-muted-foreground text-xs">
+                    {layer.type === "background" && "Business Background"}
+                    {layer.type === "product" && "Product Photo"}
+                    {layer.type === "design" && "Logo/Design"}
+                  </div>
+                )}
+                
+                {/* Selection handles */}
+                {activeLayerId === layer.id && (
+                  <>
+                    <div className="absolute -top-1 -left-1 w-2 h-2 bg-primary rounded-full" />
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+                    <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-primary rounded-full" />
+                    <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+                  </>
+                )}
               </div>
-            </div>
-          </div>
+            );
+          })}
           
           {/* Layer indicators */}
           <div className="absolute top-4 left-4">
@@ -50,12 +99,9 @@ export const Canvas = ({ width = 800, height = 600, className }: CanvasProps) =>
             </div>
           </div>
           
-          {/* Selection handles would appear here for selected elements */}
-          <div className="absolute top-20 left-20 w-16 h-16 border-2 border-primary border-dashed rounded opacity-0 hover:opacity-100 transition-opacity">
-            <div className="absolute -top-1 -left-1 w-2 h-2 bg-primary rounded-full" />
-            <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
-            <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-primary rounded-full" />
-            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+          {/* Proof dimensions indicator */}
+          <div className="absolute bottom-2 right-2 bg-background/90 px-2 py-1 rounded text-xs text-muted-foreground">
+            17" × 11"
           </div>
         </div>
       </div>

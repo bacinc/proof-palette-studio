@@ -11,6 +11,9 @@ export interface Layer {
   visible: boolean;
   locked: boolean;
   opacity: number;
+  imageUrl?: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
 }
 
 interface LayerPanelProps {
