@@ -24,12 +24,21 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				
+				/* Canvas and Workspace Colors */
+				'canvas-bg': 'hsl(var(--canvas-bg))',
+				workspace: 'hsl(var(--workspace))',
+				'panel-bg': 'hsl(var(--panel-bg))',
+				
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					hover: 'hsl(var(--primary-hover))',
+					foreground: 'hsl(var(--primary-foreground))',
+					glow: 'hsl(var(--primary-glow))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
+					hover: 'hsl(var(--secondary-hover))',
 					foreground: 'hsl(var(--secondary-foreground))'
 				},
 				destructive: {
@@ -42,6 +51,7 @@ export default {
 				},
 				accent: {
 					DEFAULT: 'hsl(var(--accent))',
+					hover: 'hsl(var(--accent-hover))',
 					foreground: 'hsl(var(--accent-foreground))'
 				},
 				popover: {
@@ -52,6 +62,10 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				
+				/* Status Colors */
+				success: 'hsl(var(--success))',
+				warning: 'hsl(var(--warning))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -64,9 +78,23 @@ export default {
 				}
 			},
 			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
+				lg: 'var(--radius-lg)',
+				md: 'var(--radius)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			backgroundImage: {
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-accent': 'var(--gradient-accent)',
+				'gradient-workspace': 'var(--gradient-workspace)'
+			},
+			boxShadow: {
+				elegant: 'var(--shadow-elegant)',
+				glow: 'var(--shadow-glow)',
+				panel: 'var(--shadow-panel)'
+			},
+			transitionTimingFunction: {
+				smooth: 'var(--transition-smooth)',
+				bounce: 'var(--transition-bounce)'
 			},
 			keyframes: {
 				'accordion-down': {
